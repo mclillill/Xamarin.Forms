@@ -251,6 +251,23 @@ namespace Xamarin.Forms.Internals
 
 		public static Registrar<IRegisterable> Registered { get; internal set; }
 
+		internal static bool IsKnownAssembly(Assembly assembly)
+		{
+			var fullName = assembly.FullName;
+			if (fullName.StartsWith("mscorlib"))
+				return true;
+			if (fullName.StartsWith("System"))
+				return true;
+			if (fullName.StartsWith("Mono"))
+				return true;
+			if (fullName.StartsWith("Java"))
+				return true;
+			if (fullName.StartsWith("FormsViewGroup"))
+				return true;
+			if (fullName.StartsWith("Xamarin") && !fullName.StartsWith("Xamarin.Forms.Platform.Android"))
+				return true;
+			return false;
+		}
 
 		public static void RegisterAll(Type[] attrTypes)
 		{
@@ -276,6 +293,10 @@ namespace Xamarin.Forms.Internals
 			Profile.PopPush("Reflect");
 			foreach (Assembly assembly in assemblies)
 			{
+				if (IsKnownAssembly(assembly))
+					continue;
+
+				var assemblyName = new AssemblyName(assembly.FullName);
 				Profile.Push(assemblyName.Name);
 
 				foreach (Type attrType in attrTypes)
