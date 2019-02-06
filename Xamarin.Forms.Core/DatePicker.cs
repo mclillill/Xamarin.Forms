@@ -5,7 +5,7 @@ using Xamarin.Forms.Platform;
 namespace Xamarin.Forms
 {
 	[RenderWith(typeof(_DatePickerRenderer))]
-	public class DatePicker : View, IFontElement, ITextElement,IElementConfiguration<DatePicker>
+	public class DatePicker : View, IFontElement, ITextElement,IElementConfiguration<DatePicker>, IPickerElement
 	{
 		public static readonly BindableProperty FormatProperty = BindableProperty.Create(nameof(Format), typeof(string), typeof(DatePicker), "d");
 
@@ -27,6 +27,10 @@ namespace Xamarin.Forms
 		public static readonly BindableProperty FontSizeProperty = FontElement.FontSizeProperty;
 
 		public static readonly BindableProperty FontAttributesProperty = FontElement.FontAttributesProperty;
+
+		public static readonly BindableProperty TitleProperty = PickerElement.TitleProperty;
+
+		public static readonly BindableProperty TitleColorProperty = PickerElement.TitleColorProperty;
 
 		readonly Lazy<PlatformConfigurationRegistry<DatePicker>> _platformConfigurationRegistry;
 
@@ -63,6 +67,18 @@ namespace Xamarin.Forms
 		{
 			get { return (Color)GetValue(TextElement.TextColorProperty); }
 			set { SetValue(TextElement.TextColorProperty, value); }
+		}
+
+		public string Title
+		{
+			get { return (string)GetValue(TitleProperty); }
+			set { SetValue(TitleProperty, value); }
+		}
+
+		public Color TitleColor
+		{
+			get { return (Color)GetValue(TitleColorProperty); }
+			set { SetValue(TitleColorProperty, value); }
 		}
 
 		public FontAttributes FontAttributes

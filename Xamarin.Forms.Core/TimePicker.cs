@@ -5,7 +5,7 @@ using Xamarin.Forms.Platform;
 namespace Xamarin.Forms
 {
 	[RenderWith(typeof(_TimePickerRenderer))]
-	public class TimePicker : View, IFontElement, ITextElement, IElementConfiguration<TimePicker>
+	public class TimePicker : View, IFontElement, ITextElement, IElementConfiguration<TimePicker>, IPickerElement
 	{
 		public static readonly BindableProperty FormatProperty = BindableProperty.Create(nameof(Format), typeof(string), typeof(TimePicker), "t");
 
@@ -22,6 +22,10 @@ namespace Xamarin.Forms
 		public static readonly BindableProperty FontSizeProperty = FontElement.FontSizeProperty;
 
 		public static readonly BindableProperty FontAttributesProperty = FontElement.FontAttributesProperty;
+
+		public static readonly BindableProperty TitleProperty = PickerElement.TitleProperty;
+
+		public static readonly BindableProperty TitleColorProperty = PickerElement.TitleColorProperty;
 
 		readonly Lazy<PlatformConfigurationRegistry<TimePicker>> _platformConfigurationRegistry;
 
@@ -40,6 +44,17 @@ namespace Xamarin.Forms
 		{
 			get { return (Color)GetValue(TextElement.TextColorProperty); }
 			set { SetValue(TextElement.TextColorProperty, value); }
+		}
+		public string Title
+		{
+			get { return (string)GetValue(TitleProperty); }
+			set { SetValue(TitleProperty, value); }
+		}
+
+		public Color TitleColor
+		{
+			get { return (Color)GetValue(TitleColorProperty); }
+			set { SetValue(TitleColorProperty, value); }
 		}
 
 		public TimeSpan Time

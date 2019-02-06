@@ -7,30 +7,34 @@ using Android.Text.Format;
 using ATimePicker = Android.Widget.TimePicker;
 using Android.OS;
 using Android.Widget;
+using AColor = Android.Graphics.Color;
 
 namespace Xamarin.Forms.Platform.Android
 {
-	public class TimePickerRenderer : ViewRenderer<TimePicker, EditText>, TimePickerDialog.IOnTimeSetListener, IPickerRenderer
+	public abstract class TimePickerRendererBase<TControl> : ViewRenderer<TimePicker, TControl>, TimePickerDialog.IOnTimeSetListener, IPickerRenderer
+		where TControl : global::Android.Views.View
 	{
+		int _originalHintTextColor;
 		AlertDialog _dialog;
-		TextColorSwitcher _textColorSwitcher;
 
 		bool Is24HourView
 		{
 			get => (DateFormat.Is24HourFormat(Context) && Element.Format == (string)TimePicker.FormatProperty.DefaultValue) || Element.Format == "HH:mm";
 		}
 
-		public TimePickerRenderer(Context context) : base(context)
+		public TimePickerRendererBase(Context context) : base(context)
 		{
 			AutoPackage = false;
 		}
 
 		[Obsolete("This constructor is obsolete as of version 2.5. Please use TimePickerRenderer(Context) instead.")]
 		[EditorBrowsable(EditorBrowsableState.Never)]
-		public TimePickerRenderer()
+		public TimePickerRendererBase()
 		{
 			AutoPackage = false;
 		}
+
+		protected abstract EditText EditText { get; }
 
 		IElementController ElementController => Element as IElementController;
 
@@ -46,11 +50,6 @@ namespace Xamarin.Forms.Platform.Android
 			_dialog = null;
 		}
 
-		protected override EditText CreateNativeControl()
-		{
-			return new PickerEditText(Context, this);
-		}
-
 		protected override void OnElementChanged(ElementChangedEventArgs<TimePicker> e)
 		{
 			base.OnElementChanged(e);
@@ -60,14 +59,14 @@ namespace Xamarin.Forms.Platform.Android
 				var textField = CreateNativeControl();
 
 				SetNativeControl(textField);
-
-				var useLegacyColorManagement = e.NewElement.UseLegacyColorManagement();
-				_textColorSwitcher = new TextColorSwitcher(textField.TextColors, useLegacyColorManagement);
+				_originalHintTextColor = EditText.CurrentHintTextColor;
 			}
 
 			SetTime(e.NewElement.Time);
 			UpdateTextColor();
 			UpdateFont();
+			UpdateTitle();
+			UpdatePlaceHolderText();
 
 			if ((int)Build.VERSION.SdkInt > 16)
 				Control.TextAlignment = global::Android.Views.TextAlignment.ViewStart;
@@ -83,6 +82,8 @@ namespace Xamarin.Forms.Platform.Android
 				UpdateTextColor();
 			else if (e.PropertyName == TimePicker.FontAttributesProperty.PropertyName || e.PropertyName == TimePicker.FontFamilyProperty.PropertyName || e.PropertyName == TimePicker.FontSizeProperty.PropertyName)
 				UpdateFont();
+			else if (e.PropertyName == DatePicker.TitleProperty.PropertyName || e.PropertyName == DatePicker.TitleColorProperty.PropertyName)
+				UpdateTitle();
 		}
 
 		protected override void OnFocusChangeRequested(object sender, VisualElement.FocusRequestArgs e)
@@ -124,6 +125,7 @@ namespace Xamarin.Forms.Platform.Android
 			ElementController.SetValueFromRenderer(VisualElement.IsFocusedPropertyKey, true);
 
 			_dialog = CreateTimePickerDialog(view.Time.Hours, view.Time.Minutes);
+			UpdateTitle();
 			_dialog.Show();
 		}
 
@@ -132,21 +134,67 @@ namespace Xamarin.Forms.Platform.Android
 			Element.Unfocus();
 		}
 
+
 		void SetTime(TimeSpan time)
 		{
 			var timeFormat = Is24HourView ? "HH:mm" : Element.Format;
-			Control.Text = DateTime.Today.Add(time).ToString(timeFormat);
+			EditText.Text = DateTime.Today.Add(time).ToString(timeFormat);
 		}
 
 		void UpdateFont()
 		{
-			Control.Typeface = Element.ToTypeface();
-			Control.SetTextSize(ComplexUnitType.Sp, (float)Element.FontSize);
+			EditText.Typeface = Element.ToTypeface();
+			EditText.SetTextSize(ComplexUnitType.Sp, (float)Element.FontSize);
 		}
 
-		void UpdateTextColor()
+		void UpdateTitle()
 		{
-			_textColorSwitcher?.UpdateTextColor(Control, Element.TextColor);
+			if (_dialog == null)
+				return;
+
+			_dialog.SetTitle(PickerManager.GetTitle(Element.TitleColor, Element.Title));
+			UpdatePlaceHolderText();
+			UpdateTitleColor();
+		}
+
+		protected internal virtual void UpdatePlaceHolderText()
+		{
+			EditText.Hint = Element.Title;
+		}
+		
+		abstract protected void UpdateTextColor();
+		internal protected virtual void UpdateTitleColor()
+		{
+			if (Element.IsSet(Picker.TitleColorProperty))
+				EditText.SetHintTextColor(Element.TitleColor.ToAndroid());
+			else
+				EditText.SetHintTextColor(new AColor(_originalHintTextColor));
 		}
 	}
+
+	public class TimePickerRenderer : TimePickerRendererBase<EditText>
+	{
+		TextColorSwitcher _textColorSwitcher;
+		[Obsolete("This constructor is obsolete as of version 2.5. Please use TimePickerRenderer(Context) instead.")]
+		public TimePickerRenderer()
+		{
+		}
+
+		public TimePickerRenderer(Context context) : base(context)
+		{
+		}
+
+		protected override EditText CreateNativeControl()
+		{
+			return new PickerEditText(Context);
+		}
+
+		protected override EditText EditText => Control;
+		protected override void UpdateTextColor()
+		{
+			_textColorSwitcher = _textColorSwitcher ?? new TextColorSwitcher(EditText.TextColors, Element.UseLegacyColorManagement());
+			_textColorSwitcher.UpdateTextColor(EditText, Element.TextColor);
+		}
+	}
+
 }

@@ -41,7 +41,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
@@ -54,6 +54,8 @@
     <Debugger>Xamarin</Debugger>
     <DevInstrumentationEnabled>True</DevInstrumentationEnabled>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AndroidDexTool Condition="'$(MSBuildAssemblyVersion)' != '15.0'">d8</AndroidDexTool>
+    <AndroidEnableDesugar Condition="'$(MSBuildAssemblyVersion)' != '15.0'">true</AndroidEnableDesugar>
     <NoWarn>
     </NoWarn>
   </PropertyGroup>
